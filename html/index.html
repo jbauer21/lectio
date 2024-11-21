@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lectio - The AI Tutor</title>
+    <!-- Include Bootstrap CSS and Font Awesome -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css">
+    <!-- Include custom CSS -->
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+    <!-- Include jQuery and Bootstrap JS -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <style>
+        /* Body and background styling */
+        body, html {
+            height: 100%;
+            margin: 0;
+            background: linear-gradient(to right, rgb(38, 51, 61), rgb(50, 55, 65), rgb(33, 33, 78));
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        .chat {
+            margin-top: auto;
+            margin-bottom: auto;
+        }
+        .card {
+            border-radius: 15px !important;
+            background-color: rgba(0,0,0,0.4) !important;
+            color: white;
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            border-bottom: 0 !important;
+            border: none;
+        }
+        .card-body {
+            overflow-y: auto;
+        }
+        .card-footer {
+            border-radius: 0 0 15px 15px !important;
+            border-top: 0 !important;
+        }
+        .user_img {
+            height: 70px;
+            width: 70px;
+            border:1.5px solid #f5f6fa;
+        }
+        .img_cont {
+            position: relative;
+            height: 70px;
+            width: 70px;
+        }
+        .online_icon {
+            position: absolute;
+            height: 15px;
+            width:15px;
+            background-color: #4cd137;
+            border-radius: 50%;
+            bottom: 0.2em;
+            right: 0.4em;
+            border:1.5px solid white;
+        }
+        .user_info {
+            margin-top: auto;
+            margin-bottom: auto;
+            margin-left: 15px;
+        }
+        .user_info span {
+            font-size: 20px;
+            color: white;
+        }
+        .user_info p {
+            font-size: 10px;
+            color: rgba(255,255,255,0.6);
+        }
+        .type_msg {
+            background-color: rgba(0,0,0,0.3) !important;
+            border:0 !important;
+            color:white !important;
+            height: 60px !important;
+            overflow-y: auto;
+        }
+        .type_msg:focus {
+            box-shadow:none !important;
+            outline:0px !important;
+        }
+        .send_btn {
+            border-radius: 0 15px 15px 0 !important;
+            background-color: rgba(0,0,0,0.3) !important;
+            border:0 !important;
+            color: white !important;
+            cursor: pointer;
+        }
+        .input-group {
+            width: 100%;
+        }
+        /* Message styles */
+        .chat_message {
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .chat_message.user {
+            background-color: #58cc71;
+            margin-left: auto;
+        }
+        .chat_message.bot {
+            background-color: rgb(82, 172, 255);
+            margin-right: auto;
+        }
+        /* Spinner styles */
+        .spinner-border {
+            color: white;
+        }
+        /* Adjust card heights */
+        .transcription-card .card-body {
+            max-height: 500px;
+        }
+        .chat-card .card-body {
+            max-height: calc(100vh - 500px);
+        }
+       
+        /* Added CSS for transcriptionBox */
+        #transcriptionBox {
+            white-space: pre-wrap;
+            color: white;
+            overflow-y: auto;
+            max-height: 300px; /* Adjust as needed */
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            text-align: left; /* Left-align the text */
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid h-100">
+        <div class="row justify-content-center h-100">     
+            <div class="col-md-8 col-xl-6 chat">
+                <!-- Transcription Card -->
+                <div class="card mb-3 transcription-card">
+                    <!-- Transcription Body -->
+                    <div class="card-body">
+                        <!-- YouTube URL Input -->
+                        <div class="input-group mb-3">
+                            <input type="text" id="videoUrl" class="form-control type_msg" placeholder="Enter YouTube Video URL here">
+                            <div class="input-group-append">
+                                <button class="input-group-text send_btn" onclick="processVideo()"><i class="fas fa-video"></i></button>
+                            </div>
+                        </div>
+                        <!-- Transcription Display -->
+                        <div id="transcriptionBox">
+                            <p>Transcription will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Chat Card -->
+                <div class="card chat-card">
+                    <!-- Chat Header -->
+                    <div class="card-header msg_head">
+                        <div class="d-flex bd-highlight">
+                            <div class="img_cont">
+                                <img src="https://i.ibb.co/fSNP7Rz/icons8-chatgpt-512.png" class="rounded-circle user_img">
+                                <span class="online_icon"></span>
+                            </div>
+                            <div class="user_info">
+                                <span>Chat with Lectio</span>
+                                <p>Ask me anything about your video!</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Chat Body -->
+                    <div class="card-body msg_card_body" id="msg_card_body">
+                        <!-- Chat Messages -->
+                        <div id="chatMessages">
+                            <!-- Messages will be appended here -->
+                        </div>
+                    </div>
+                    <!-- Chat Footer -->
+                    <div class="card-footer">
+                        <!-- Chat Input -->
+                        <div class="input-group">
+                            <input type="text" id="chatInput" class="form-control type_msg" placeholder="Type your question here..." onkeypress="handleKeyPress(event)" disabled>
+                            <div class="input-group-append">
+                                <button class="input-group-text send_btn" onclick="sendMessage()"><i class="fas fa-location-arrow"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+   </div>
+
+   <!-- JavaScript Code -->
+   <script>
+       // Function to process video
+       async function processVideo() {
+           const videoUrl = document.getElementById('videoUrl').value;
+           if (!videoUrl) {
+               alert("Please enter a YouTube video URL.");
+               return;
+           }
+
+           // Show spinner
+           let spinner = document.createElement('div');
+           spinner.className = 'spinner-border text-light';
+           spinner.role = 'status';
+           document.getElementById('transcriptionBox').innerHTML = '';
+           document.getElementById('transcriptionBox').appendChild(spinner);
+
+           try {
+               const response = await fetch('/process_video', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({ url: videoUrl })
+               });
+               const data = await response.json();
+
+               if (data.success) {
+                   document.getElementById('transcriptionBox').textContent = data.transcription;
+                   document.getElementById('chatInput').disabled = false;  // Enable chat input
+               } else {
+                   alert("Error: " + data.error);
+                   document.getElementById('transcriptionBox').textContent = 'Transcription will appear here...';
+               }
+           } catch (error) {
+               console.error('Error processing video:', error);
+               alert("Failed to process video. Please check the console for details.");
+               document.getElementById('transcriptionBox').textContent = 'Transcription will appear here...';
+           }
+       }
+
+       // Function to handle Enter key press
+       function handleKeyPress(event) {
+           if (event.key === 'Enter') {
+               sendMessage();
+           }
+       }
+
+       // Function to send chat messages
+       async function sendMessage() {
+           const chatInputElement = document.getElementById('chatInput');
+           if (!chatInputElement) {
+               console.error('Chat input element not found.');
+               return;
+           }
+           const message = chatInputElement.value;
+           if (!message || message.trim() === '') {
+               console.error('Empty message, not sending.');
+               return;
+           }
+
+           // Display user's message
+           displayMessage('You', message, 'user');
+           chatInputElement.value = '';
+
+           // Show spinner
+           let spinner = document.createElement('div');
+           spinner.className = 'spinner-border text-light';
+           spinner.role = 'status';
+           let botMessage = document.createElement('div');
+           botMessage.className = 'chat_message bot';
+           botMessage.appendChild(spinner);
+           document.getElementById('chatMessages').appendChild(botMessage);
+           document.getElementById('msg_card_body').scrollTop = document.getElementById('msg_card_body').scrollHeight;
+
+           try {
+               const response = await fetch('/send_message', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({ message: message })
+               });
+               const data = await response.json();
+               botMessage.removeChild(spinner);
+
+               if (data.response) {
+                   botMessage.textContent = data.response;
+               } else if (data.error) {
+                   botMessage.textContent = 'Error: ' + data.error;
+                   console.error('Server error:', data.error);
+               } else {
+                   botMessage.textContent = 'Unexpected response from server.';
+                   console.error('Unexpected server response:', data);
+               }
+           } catch (error) {
+               console.error('Error sending message:', error);
+               botMessage.removeChild(spinner);
+               botMessage.textContent = 'Error getting response.';
+           }
+       }
+
+       // Function to display messages in chat
+       function displayMessage(sender, message, type) {
+           if (!message || message.trim() === '') {
+               console.error('Attempted to display empty message.');
+               return;
+           }
+
+           const messageElement = document.createElement('div');
+           messageElement.className = `chat_message ${type}`;
+           messageElement.textContent = message;
+           document.getElementById('chatMessages').appendChild(messageElement);
+           document.getElementById('msg_card_body').scrollTop = document.getElementById('msg_card_body').scrollHeight;
+       }
+   </script>
+</body>
+</html>
