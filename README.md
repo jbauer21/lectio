@@ -1,6 +1,6 @@
 # Lectio: AI-Powered Video Lecture Assistant
 
-![Lectio Logo](https://i.ibb.co/fSNP7Rz/icons8-chatgpt-512.png)
+![Lectio Logo](images/lectio-logo.png)
 
 ## Overview
 
@@ -118,10 +118,6 @@ Lectio consists of three main components:
 - Local file upload capabilities
 - Integration with learning management systems
 - Collaborative session sharing
-
-## License
-
-[Specify license information here]
 
 ## Contact
 
