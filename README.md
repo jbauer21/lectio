@@ -129,3 +129,4 @@ Email: julianbauervr@gmail.com
 - OpenAI for providing the API services that power this application
 - yt-dlp project for YouTube download functionality
 - Bootstrap and MathJax for frontend components
+- UI belongs to a YouTube Tutorial for which I have lost the link. If this UI belongs to you, please contact me, and I will credit you.
