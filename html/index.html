@@ -6,11 +6,27 @@
     <!-- Include Bootstrap CSS and Font Awesome -->
     <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css">
-    <!-- Include custom CSS -->
+
+    <!-- Include custom CSS (if any) -->
     <link rel="stylesheet" type="text/css" href="style.css"/>
+
     <!-- Include jQuery and Bootstrap JS -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+
+    <!-- MathJax 3 configuration and script -->
+    <!-- This allows for parsing LaTeX like \( ... \) or $ ... $ -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$','$$'], ['\\[','\\]']]
+        },
+        svg: { fontCache: 'global' }
+      };
+    </script>
+    <script async id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
     <style>
         /* Body and background styling */
         body, html {
@@ -103,6 +119,8 @@
             margin-bottom: 10px;
             max-width: 80%;
             word-wrap: break-word;
+            /* Ensure multi-line text (and LaTeX) is preserved */
+            white-space: pre-wrap;
         }
         .chat_message.user {
             background-color: #58cc71;
@@ -123,7 +141,6 @@
         .chat-card .card-body {
             max-height: calc(100vh - 500px);
         }
-       
         /* Added CSS for transcriptionBox */
         #transcriptionBox {
             white-space: pre-wrap;
@@ -242,6 +259,33 @@
            }
        }
 
+       /**
+        * Converts:
+        * - Lines starting with "### " into <h3>...</h3>
+        * - Anything wrapped in **...** into <strong>...</strong>
+        */
+       function formatBotResponse(response) {
+           if (!response) return '';
+
+           // Replace **...** with <strong>...</strong>
+           let formatted = response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+           // Split by newline to handle headings
+           let lines = formatted.split('\n');
+           lines = lines.map(line => {
+               // If a line starts with ### (Markdown-style heading), convert to <h3>
+               if (line.trim().startsWith('###')) {
+                   // Remove the '###' part
+                   let headingText = line.replace(/^###\s*/, '');
+                   return `<h3>${headingText}</h3>`;
+               }
+               return line;
+           });
+
+           // Join back with <br> to preserve line breaks
+           return lines.join('<br>');
+       }
+
        // Function to send chat messages
        async function sendMessage() {
            const chatInputElement = document.getElementById('chatInput');
@@ -259,13 +303,15 @@
            displayMessage('You', message, 'user');
            chatInputElement.value = '';
 
-           // Show spinner
+           // Show spinner in bot message
            let spinner = document.createElement('div');
            spinner.className = 'spinner-border text-light';
            spinner.role = 'status';
+
            let botMessage = document.createElement('div');
            botMessage.className = 'chat_message bot';
            botMessage.appendChild(spinner);
+
            document.getElementById('chatMessages').appendChild(botMessage);
            document.getElementById('msg_card_body').scrollTop = document.getElementById('msg_card_body').scrollHeight;
 
@@ -276,15 +322,27 @@
                    body: JSON.stringify({ message: message })
                });
                const data = await response.json();
+
+               // Remove spinner
                botMessage.removeChild(spinner);
 
                if (data.response) {
-                   botMessage.textContent = data.response;
+                   // Format the response for headings and bold text
+                   const formattedResponse = formatBotResponse(data.response);
+                   botMessage.innerHTML = formattedResponse;
+
+                   // --- Re-typeset this newly inserted HTML for LaTeX ---
+                   if (window.MathJax && MathJax.typesetPromise) {
+                       MathJax.typesetPromise([botMessage]).catch(function(err) {
+                           console.error('MathJax typeset failed: ' + err.message);
+                       });
+                   }
+
                } else if (data.error) {
-                   botMessage.textContent = 'Error: ' + data.error;
+                   botMessage.innerHTML = '<strong>Error:</strong> ' + data.error;
                    console.error('Server error:', data.error);
                } else {
-                   botMessage.textContent = 'Unexpected response from server.';
+                   botMessage.innerHTML = 'Unexpected response from server.';
                    console.error('Unexpected server response:', data);
                }
            } catch (error) {
@@ -294,7 +352,7 @@
            }
        }
 
-       // Function to display messages in chat
+       // Function to display messages in chat (for user messages only)
        function displayMessage(sender, message, type) {
            if (!message || message.trim() === '') {
                console.error('Attempted to display empty message.');
